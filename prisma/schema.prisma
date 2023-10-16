@@ -23,11 +23,10 @@ model Customer {
 }
 
 model HealthProblem {
-  id         String    @id @default(uuid())
-  name       String
-  degree     Int
-  Customer   Customer? @relation(fields: [customerId], references: [id])
-  customerId String?
+  id        String     @id @default(uuid())
+  name      String
+  degree    Int
+  customers Customer[]
 
   @@map("health_problems")
 }

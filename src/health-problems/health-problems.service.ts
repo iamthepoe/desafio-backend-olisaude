@@ -1,26 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHealthProblemDto } from './dto/create-health-problem.dto';
 import { UpdateHealthProblemDto } from './dto/update-health-problem.dto';
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class HealthProblemsService {
-  create(createHealthProblemDto: CreateHealthProblemDto) {
-    return 'This action adds a new healthProblem';
+  constructor(private readonly prisma: PrismaService) { }
+
+  create(data: CreateHealthProblemDto) {
+    return this.prisma.healthProblem.create({ data });
   }
 
   findAll() {
-    return `This action returns all healthProblems`;
+    return this.prisma.healthProblem.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} healthProblem`;
+  async findOne(id: string) {
+    const healthProblem = await this.prisma.healthProblem.findFirst({ where: { id } });
+    if (!healthProblem) throw new NotFoundException('Health Problem not found.');
+    return healthProblem;
   }
 
-  update(id: number, updateHealthProblemDto: UpdateHealthProblemDto) {
-    return `This action updates a #${id} healthProblem`;
+  async update(id: string, data: UpdateHealthProblemDto) {
+    const healthProblem = await this.prisma.healthProblem.findFirst({ where: { id } });
+    if (!healthProblem) throw new NotFoundException('Health Problem not found.');
+    return this.prisma.healthProblem.update({ where: { id }, data });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} healthProblem`;
+  async remove(id: string) {
+    const healthProblem = await this.prisma.healthProblem.findFirst({ where: { id } });
+    if (!healthProblem) throw new NotFoundException('Health Problem not found.');
+    this.prisma.healthProblem.delete({ where: { id } });
   }
 }
