@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateHealthProblemDto } from './dto/create-health-problem.dto';
 import { UpdateHealthProblemDto } from './dto/update-health-problem.dto';
 import { PrismaService } from '../database/prisma.service';
+import { HealthProblemEntity } from './entities/health-problem.entity';
 
 @Injectable()
 export class HealthProblemsService {
@@ -31,5 +32,18 @@ export class HealthProblemsService {
     const healthProblem = await this.prisma.healthProblem.findFirst({ where: { id } });
     if (!healthProblem) throw new NotFoundException('Health Problem not found.');
     this.prisma.healthProblem.delete({ where: { id } });
+  }
+
+  async findMany(ids: string[]) {
+    const healthProblems = await Promise.all(ids.map(async (id) => {
+      const healthProblem = await this.prisma.healthProblem.findFirst({ where: { id } });
+      if (!healthProblem) {
+        throw new NotFoundException(`Health Problem not Found. (ID: ${id})`);
+      }
+
+      return healthProblem;
+    }));
+
+    return healthProblems;
   }
 }
