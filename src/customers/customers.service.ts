@@ -35,18 +35,43 @@ export class CustomersService {
   }
 
   findAll() {
-    return `This action returns all customers`;
+    return this.prisma.customer.findMany({ include: { healthProblems: true } });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} customer`;
+  async findOne(id: string) {
+    const customer = await this.prisma.customer.findFirst({ where: { id }, include: { healthProblems: true } });
+    if (!customer) throw new NotFoundException('Customer not found.');
+    return customer;
   }
 
-  update(id: number, updateCustomerDto: UpdateCustomerDto) {
-    return `This action updates a #${id} customer`;
+  async update(id: string, data: UpdateCustomerDto) {
+    let healthProblems = {};
+    let healthProblemsIds: { id: string }[];
+
+    const customer = await this.prisma.customer.findFirst({ where: { id }, select: { id: true } });
+    if (!customer) throw new NotFoundException('Customer not found.');
+
+    if (data?.healthProblems) {
+      await this.healthProblemsService.findMany(data.healthProblems);
+      healthProblemsIds = data.healthProblems?.map(id => { return { id } });
+      healthProblems = { connect: healthProblemsIds };
+    }
+
+
+    return this.prisma.customer.update({
+      where: { id },
+      data: {
+        ...data,
+        birthdate: new Date(data.birthdate),
+        healthProblems: healthProblems || undefined
+      },
+      include: { healthProblems: true }
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} customer`;
+  async remove(id: string) {
+    const customer = await this.prisma.customer.findFirst({ where: { id }, select: { id: true } });
+    if (!customer) throw new NotFoundException('Customer not found.');
+    return this.prisma.customer.delete({ where: { id } });
   }
 }
