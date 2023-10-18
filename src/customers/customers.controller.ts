@@ -31,4 +31,9 @@ export class CustomersController {
   remove(@Param('id') id: string) {
     return this.customersService.remove(id);
   }
+
+  @Get('risk-list')
+  getTopHealthRiskCustomers() {
+    return this.customersService.getTopHealthRiskCustomers();
+  }
 }

@@ -74,4 +74,36 @@ export class CustomersService {
     if (!customer) throw new NotFoundException('Customer not found.');
     return this.prisma.customer.delete({ where: { id } });
   }
+
+  async getTopHealthRiskCustomers() {
+    let topCustomersQuery = await this.prisma.$queryRaw`
+    SELECT
+      "Customer"."id" AS "customer_id",
+      "Customer"."name" AS "customer_name",
+      SUM("HealthProblem"."degree") AS "total_degree"
+    FROM
+      "_CustomerToHealthProblem" AS "CustomerHealthProblem"
+    JOIN
+      "customers" AS "Customer"
+    ON
+      "CustomerHealthProblem"."A" = "Customer"."id"
+    JOIN
+      "health_problems" AS "HealthProblem"
+    ON
+      "CustomerHealthProblem"."B" = "HealthProblem"."id"
+    GROUP BY
+      "Customer"."id", "Customer"."name"
+    ORDER BY
+      "total_degree" DESC
+    LIMIT 10;
+    ` as { customer_id: string, customer_name: string, total_degree: number }[];
+
+    let topCustomers = topCustomersQuery.map((customer) => ({
+      name: customer.customer_name,
+      score: (1 / (1 + Math.E ** -(-2.8 + Number(customer.total_degree)))) * 100,
+    }));
+
+
+    return topCustomers;
+  }
 }
